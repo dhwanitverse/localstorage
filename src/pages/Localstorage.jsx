@@ -4,185 +4,160 @@ import { FaPen } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { v4 as uuidv4 } from "uuid";
 
-const Localstorage = () => {
-  const [user, setUser] = useState([]);
-  const [id, setId] = useState(null);
+const LocalStorageForm = () => {
+  const [dishes, setDishes] = useState([]);
+  const [editId, setEditId] = useState(null);
   const { register, handleSubmit, reset } = useForm();
 
-  function submit(data) {
-    if (id === null) {
-      const newUser = {
-        id: uuidv4(),
-        ...data,
-      };
-      setUser([...user, newUser]);
-      alert("Submitted successfully");
-      reset();
-    } else {
-      const updatedata = user.findIndex((element) => {
-        return element.id === id;
-      });
-      const newuser = [...user];
-      newuser[updatedata] = data;
-      setUser(newuser);
-      alert("Updated successfully");
-      setId(null);
-      location.reload();
-    }
-  }
-
   useEffect(() => {
-    if (user.length > 0) {
-      localStorage.setItem("datalist", JSON.stringify(user));
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const datalist = JSON.parse(localStorage.getItem("datalist"));
-    if (datalist) {
-      setUser(datalist);
-    }
+    const storedData = JSON.parse(localStorage.getItem("dishlist")) || [];
+    setDishes(storedData);
   }, []);
-  function trash(id) {
-    if (confirm("Do you want to delete this data")) {
-      const deletedata = user.filter((element) => {
-        return element.id !== id;
-      });
-      setUser(deletedata);
+
+  useEffect(() => {
+    localStorage.setItem("dishlist", JSON.stringify(dishes));
+  }, [dishes]);
+
+  const onSubmit = (data) => {
+    if (editId === null) {
+      setDishes([...dishes, { id: uuidv4(), ...data }]);
+      alert("Dish added successfully");
+    } else {
+      setDishes(
+        dishes.map((dish) =>
+          dish.id === editId ? { ...data, id: editId } : dish
+        )
+      );
+      alert("Dish updated successfully");
+      setEditId(null);
     }
-  }
-  function update(id) {
-    setId(id);
-    const selectedUser = user.find((element) => {
-      return element.id === id;
-    });
-    reset(selectedUser);
-  }
+    reset();
+  };
+
+  const handleDelete = (id) => {
+    if (confirm("Do you want to delete this dish?")) {
+      setDishes(dishes.filter((dish) => dish.id !== id));
+    }
+  };
+
+  const handleEdit = (id) => {
+    setEditId(id);
+    reset(dishes.find((dish) => dish.id === id));
+  };
 
   return (
-    <>
-      <h2>User Form with LocalStorage</h2>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Dish Management Form</h2>
       <form
-        className="col-lg-6 p-5 my-5 mx-auto shadow"
-        onSubmit={handleSubmit(submit)}
+        className="p-4 shadow-lg rounded bg-light"
+        onSubmit={handleSubmit(onSubmit)}
       >
-        <div className="mt-4">
+        <div className="mb-3">
+          <label className="form-label">Dish Name</label>
           <input
             type="text"
             className="form-control"
-            placeholder="Username"
-            {...register("username")}
+            placeholder="Enter dish name"
+            {...register("name")}
+            required
           />
         </div>
-        <div className="mt-4">
+        <div className="mb-3">
+          <label className="form-label">Cuisine</label>
           <input
-            type="email"
+            type="text"
             className="form-control"
-            placeholder="Email"
-            {...register("email")}
+            placeholder="Enter cuisine type"
+            {...register("cuisine")}
+            required
           />
         </div>
-        <div className="mt-4">
+        <div className="mb-3">
+          <label className="form-label">Price ($)</label>
           <input
             type="number"
             className="form-control"
-            placeholder="Number"
-            {...register("number")}
+            placeholder="Enter price"
+            {...register("price")}
+            required
           />
         </div>
-        <div className="mt-4">
-          <select {...register("city")} className="form-dropdown form-control">
-            <option value="">Select City</option>
-            <option value="Ahmedabad">Ahmedabad</option>
-            <option value="Surat">Surat</option>
-            <option value="Vadodara">Vadodara</option>
-            <option value="Gandhinagar">Gandhinagar</option>
-          </select>
-        </div>
-        <div className="mt-4">
-          <label>Gender</label>
-          <br />
-          <input type="radio" {...register("gender")} value="male" />
-          <label>Male</label>
-          <br />
-          <input type="radio" {...register("gender")} value="female" />
-          <label>Female</label>
-          <br />
-        </div>
-        <div className="mt-4">
+        <div className="mb-3">
+          <label className="form-label">Ingredients</label>
           <textarea
             className="form-control"
-            placeholder="Address"
-            {...register("address")}
+            placeholder="Enter ingredients"
+            {...register("ingredients")}
+            required
           ></textarea>
         </div>
-        <div className="mt-4">
-          <label htmlFor="">Hobbies</label>
-          <br />
-          {["Sports", "Reading", "Cooking", "Writing"].map((hobby) => (
-            <div key={hobby}>
-              <input type="checkbox" {...register("hobbies")} value={hobby} />
-              <label htmlFor="">{hobby}</label>
-            </div>
-          ))}
+        <div className="mb-3">
+          <label className="form-label">Dish Image URL</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Enter image URL"
+            {...register("image")}
+            required
+          />
         </div>
-        <div className="mt-4">
-          {id === null ? (
-            <button type="submit" className="form-control btn btn-success">
-              Submit
-            </button>
-          ) : (
-            <button type="submit" className="form-control btn btn-warning">
-              Update
-            </button>
-          )}
-        </div>
+        <button
+          type="submit"
+          className={`btn ${editId ? "btn-warning" : "btn-success"} w-100 my-2`}
+        >
+          {editId ? "Update Dish" : "Add Dish"}
+        </button>
       </form>
 
-      {/* Table to Display Data */}
-      <table className="table table-striped table-hover table-success">
+      <table className="table table-striped mt-4">
         <thead>
           <tr>
-            <th>Sr. No</th>
+            <th>#</th>
             <th>Name</th>
-            <th>Gender</th>
-            <th>Email</th>
-            <th>Number</th>
-            <th>Address</th>
-            <th>City</th>
+            <th>Cuisine</th>
+            <th>Price ($)</th>
+            <th>Ingredients</th>
+            <th>Image</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {user.map((element, index) => (
-            <tr key={element.id}>
+          {dishes.map((dish, index) => (
+            <tr key={dish.id}>
               <td>{index + 1}</td>
-              <td>{element.username}</td>
-              <td>{element.gender}</td>
-              <td>{element.email}</td>
-              <td>{element.number}</td>
-              <td>{element.address}</td>
-              <td>{element.city}</td>
+              <td>{dish.name}</td>
+              <td>{dish.cuisine}</td>
+              <td>{dish.price}</td>
+              <td>{dish.ingredients}</td>
+              <td>
+                <img
+                  src={dish.image}
+                  alt={dish.name}
+                  width="100"
+                  height="70"
+                  className="img-thumbnail"
+                />
+              </td>
               <td>
                 <button
-                  onClick={() => update(element.id)}
-                  className="btn btn-warning"
+                  onClick={() => handleEdit(dish.id)}
+                  className="btn btn-warning me-2"
                 >
-                  <FaPen style={{ cursor: "pointer", marginRight: "10px" }} />
+                  <FaPen />
                 </button>
                 <button
-                  onClick={() => trash(element.id)}
+                  onClick={() => handleDelete(dish.id)}
                   className="btn btn-danger"
                 >
-                  <MdDelete style={{ cursor: "pointer" }} />
+                  <MdDelete />
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </>
+    </div>
   );
 };
 
-export default Localstorage;
+export default LocalStorageForm;
